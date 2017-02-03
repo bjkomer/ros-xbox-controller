@@ -17,10 +17,14 @@ STICK_MAX = 32767.0
 TRIGGER_MAX = 255
 
 class Controller(XBox):
-    def __init__(self, topic='/cmd_vel', wireless_index=0, disable_signals=False):
+    def __init__(self, topic='/cmd_vel', wireless_index=0, disable_signals=False,
+                 lin_limit=0.2, ang_limit=0.7):
         rospy.init_node('nengo_interface', anonymous=True, disable_signals=disable_signals)
-
+        
         self.pub_twist = rospy.Publisher(topic, Twist)
+
+        self.lin_limit = lin_limit
+        self.ang_limit = ang_limit
 
         super(Controller, self).__init__(wireless_index=wireless_index)
 
@@ -58,20 +62,20 @@ class Controller(XBox):
         msg.angular.z = zl - zr
         
         # Speed limiting checks, so things don't break
-        if msg.linear.x > 1:
-            msg.linear.x = 1
-        elif msg.linear.x < -1:
-            msg.linear.x = -1
+        if msg.linear.x > self.lin_limit:
+            msg.linear.x = self.lin_limit
+        elif msg.linear.x < -self.lin_limit:
+            msg.linear.x = -self.lin_limit
 
-        if msg.linear.y > 1:
-            msg.linear.y = 1
-        elif msg.linear.y < -1:
-            msg.linear.y = -1
+        if msg.linear.y > self.lin_limit:
+            msg.linear.y = self.lin_limit
+        elif msg.linear.y < -self.lin_limit:
+            msg.linear.y = -self.lin_limit
 
-        if msg.angular.z > 2.2:
-            msg.angular.z = 2.2
-        elif msg.angular.z < -2.2:
-            msg.angular.z = -2.2
+        if msg.angular.z > self.ang_limit:
+            msg.angular.z = self.ang_limit
+        elif msg.angular.z < -self.ang_limit:
+            msg.angular.z = -self.ang_limit
 
         self.pub_twist.publish(msg)
 
